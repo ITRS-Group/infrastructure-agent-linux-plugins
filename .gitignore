@@ -1,0 +1,10 @@
+# Build Artifacts
+extracted
+out
+
+# Development Files
+*.sw[op]
+.config
+.DS_Store
+.envrc
+.idea/

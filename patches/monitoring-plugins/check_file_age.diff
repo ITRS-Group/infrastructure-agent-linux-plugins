@@ -1,0 +1,56 @@
+--- ./plugins-scripts/check_file_age.pl	2016-11-29 08:45:08.000000000 +0000
++++ ./plugins-scripts/check_file_age.pl	2021-10-04 13:42:58.792468436 +0100
+@@ -21,19 +21,18 @@
+ # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ 
+ use strict;
++use lib "/opt/itrs/infrastructure-agent/plugins/perl/lib", "/opt/itrs/infrastructure-agent/plugins";
+ use English;
+ use Getopt::Long;
+ use File::stat;
+ use vars qw($PROGNAME);
+-use FindBin;
+-use lib "$FindBin::Bin";
+ use utils qw (%ERRORS &print_revision &support);
+ 
+ sub print_help ();
+ sub print_usage ();
+ 
+ my ($opt_c, $opt_f, $opt_w, $opt_C, $opt_W, $opt_h, $opt_V, $opt_i);
+-my ($result, $message, $age, $size, $st, $perfdata);
++my ($result, $message, $age, $size, $st);
+ 
+ $PROGNAME="check_file_age";
+ 
+@@ -60,12 +59,12 @@
+ 
+ if ($opt_V) {
+ 	print_revision($PROGNAME, '@NP_VERSION@');
+-	exit $ERRORS{'UNKNOWN'};
++	exit $ERRORS{'OK'};
+ }
+ 
+ if ($opt_h) {
+ 	print_help();
+-	exit $ERRORS{'UNKNOWN'};
++	exit $ERRORS{'OK'};
+ }
+ 
+ $opt_f = shift unless ($opt_f);
+@@ -91,7 +90,6 @@
+ $st = File::stat::stat($opt_f);
+ $age = time - $st->mtime;
+ $size = $st->size;
+-$perfdata = "age=${age}s;${opt_w};${opt_c} size=${size}B;${opt_W};${opt_C};0";
+ 
+ 
+ $result = 'OK';
+@@ -103,7 +101,7 @@
+ 	$result = 'WARNING';
+ }
+ 
+-print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes | $perfdata\n";
++print "FILE_AGE $result: $opt_f is $age seconds old and $size bytes\n";
+ exit $ERRORS{$result};
+ 
+ sub print_usage () {

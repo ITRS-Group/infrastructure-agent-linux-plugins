@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+set -eu
+trap 'echo "METRIC UNKNOWN: Integration impacted: could not retrieve physical server cpu model"; exit 3' ERR
+
+# get rid of stderr messages
+exec 2> /dev/null
+
+usage()
+{
+  cat <<EOF
+Usage: `basename $0`
+
+Outputs the CPU model of the machine. The 'lscpu' command must be present and report the "Model name" field.
+EOF
+  exit 3
+}
+
+
+OPTIND=1
+while getopts "h" opt
+do
+  case "$opt" in
+    'h') usage ;;
+    '?') usage ;;
+  esac
+done
+shift $(expr $OPTIND - 1)
+
+# Fail if command doesn't work or we can't extract what we expect, and sed to trim leading/trailing whitespace
+model="$(lscpu | grep -Po '^Model name:\s*\K.+' | sed -E 's/(^[[:space:]]*|[[:space:]]*$)//g')"
+
+# Fail if we got no data
+[ -n "$model" ]
+
+echo "METRIC OK: $model"

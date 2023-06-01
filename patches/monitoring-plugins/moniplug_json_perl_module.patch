@@ -1,0 +1,10 @@
+diff -ur monitoring-plugins-2.1.1.orig/perlmods/install_order monitoring-plugins-2.1.1/perlmods/install_order
+--- monitoring-plugins-2.1.1.orig/perlmods/install_order	2014-11-28 15:45:30.000000000 +0000
++++ monitoring-plugins-2.1.1/perlmods/install_order	2016-02-26 08:51:42.411472189 +0000
+@@ -14,3 +14,4 @@
+ Class-Accessor
+ Config-Tiny
+ Monitoring-Plugin
++JSON
+Only in monitoring-plugins-2.1.1/perlmods: JSON-2.90
+Only in monitoring-plugins-2.1.1/perlmods: JSON-2.90.tar.gz

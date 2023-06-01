@@ -1,0 +1,61 @@
+diff -ur monitoring-plugins-2.1.1.orig/plugins/check_procs.c monitoring-plugins-2.1.1/plugins/check_procs.c
+--- monitoring-plugins-2.1.1.orig/plugins/check_procs.c	2014-11-28 15:45:30.000000000 +0000
++++ monitoring-plugins-2.1.1/plugins/check_procs.c	2015-02-04 14:55:37.879895455 +0000
+@@ -70,6 +70,7 @@
+ #define PCPU 256
+ #define ELAPSED 512
+ #define EREG_ARGS 1024
++#define NEG_EREG_ARGS 2048
+ 
+ #define KTHREAD_PARENT "kthreadd" /* the parent process of kernel threads:
+ 							ppid of procs are compared to pid of this proc*/
+@@ -271,6 +272,8 @@
+ 				resultsum |= ARGS;
+ 			if ((options & EREG_ARGS) && procargs && (regexec(&re_args, procargs, (size_t) 0, NULL, 0) == 0))
+ 				resultsum |= EREG_ARGS;
++			if ((options & NEG_EREG_ARGS) && procargs && (regexec(&re_args, procargs, (size_t) 0, NULL, 0) != 0))
++				resultsum |= NEG_EREG_ARGS;
+ 			if ((options & PROG) && procprog && (strcmp (prog, procprog) == 0))
+ 				resultsum |= PROG;
+ 			if ((options & PPID) && (procppid == ppid))
+@@ -406,6 +409,7 @@
+ 		{"version", no_argument, 0, 'V'},
+ 		{"verbose", no_argument, 0, 'v'},
+ 		{"ereg-argument-array", required_argument, 0, CHAR_MAX+1},
++		{"negate-ereg-argument-array", required_argument, 0, CHAR_MAX+3},
+ 		{"input-file", required_argument, 0, CHAR_MAX+2},
+ 		{"no-kthreads", required_argument, 0, 'k'},
+ 		{"traditional-filter", no_argument, 0, 'T'},
+@@ -500,6 +504,7 @@
+ 			options |= ARGS;
+ 			break;
+ 		case CHAR_MAX+1:
++		case CHAR_MAX+3:
+ 			err = regcomp(&re_args, optarg, cflags);
+ 			if (err != 0) {
+ 				regerror (err, &re_args, errbuf, MAX_INPUT_BUFFER);
+@@ -512,8 +517,13 @@
+ 					temp_string[i]=',';
+ 				i++;
+ 			}
+-			xasprintf (&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), temp_string);
+-			options |= EREG_ARGS;
++			if(c==CHAR_MAX+3) {
++				xasprintf (&fmt, "%s%snegated regex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), temp_string);
++				options |= NEG_EREG_ARGS;
++			} else {
++				xasprintf (&fmt, "%s%sregex args '%s'", (fmt ? fmt : ""), (options ? ", " : ""), temp_string);
++				options |= EREG_ARGS;
++			}
+ 			break;
+ 		case 'r': 					/* RSS */
+ 			if (sscanf (optarg, "%d%[^0-9]", &rss, tmp) == 1) {
+@@ -743,6 +753,8 @@
+   printf ("   %s\n", _("Only scan for processes with args that contain STRING."));
+   printf (" %s\n", "--ereg-argument-array=STRING");
+   printf ("   %s\n", _("Only scan for processes with args that contain the regex STRING."));
++  printf (" %s\n", "--negate-ereg-argument-array=STRING");
++  printf ("   %s\n", _("Only scan for processes without args that contain the regex STRING."));
+   printf (" %s\n", "-C, --command=COMMAND");
+   printf ("   %s\n", _("Only scan for exact matches of COMMAND (without path)."));
+   printf (" %s\n", "-k, --no-kthreads");

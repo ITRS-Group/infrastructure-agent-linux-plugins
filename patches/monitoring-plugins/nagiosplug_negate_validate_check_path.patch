@@ -1,0 +1,57 @@
+# Resolves security issue found by ProCheckup (see OP-51988)
+
+diff -ur monitoring-plugins-2.2/plugins/negate.c monitoring-plugins-2.2/plugins/negate.c.patched
+--- monitoring-plugins-2.2/plugins/negate.c	2016-11-29 08:45:08.000000000 +0000
++++ monitoring-plugins-2.2.patched/plugins/negate.c	2022-03-30 13:09:31.086157046 +0000
+@@ -40,11 +40,17 @@
+ #include "utils_cmd.h"
+ 
+ #include <ctype.h>
++#include <limits.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
+ 
+ /* char *command_line; */
+ 
+ static const char **process_arguments (int, char **);
+ void validate_arguments (char **);
++bool is_inside_dir(const char *parent, const char *child);
+ void print_help (void);
+ void print_usage (void);
+ int subst_text = FALSE;
+@@ -213,6 +219,33 @@
+ 
+ 	if (strncmp(command_line[0],"/",1) != 0 && strncmp(command_line[0],"./",2) != 0)
+ 		usage4 (_("Require path to command"));
++
++	if (!is_inside_dir("/opt/opsview/monitoringscripts/plugins/", command_line[0])
++	    && !is_inside_dir("/opt/opsview/agent/plugins/", command_line[0]))
++	    usage4(_("Command must be a plugin"));
++}
++
++
++bool
++is_inside_dir(const char *parent, const char *child)
++{
++    bool result = false;
++    char *abs_parent = realpath(parent, NULL);
++    if (abs_parent) {
++
++        char *abs_child  = realpath(child,  NULL);
++        if (!abs_child)  { usage4(_("Command not found")); }
++
++        size_t parent_len = strlen(abs_parent);
++        size_t child_len  = strlen(abs_child);
++
++        result = strncmp(abs_parent, abs_child, parent_len) == 0 &&
++            (child_len == parent_len || abs_child[parent_len] == '/');
++
++        free(abs_parent);
++        free(abs_child);
++    }
++    return result;
+ }
+ 
+ 

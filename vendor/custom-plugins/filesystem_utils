@@ -1,0 +1,94 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+
+usage()
+{
+  filename_array=(${0//_/ })
+  # requires bash 4.1+
+  plugin_type=${filename_array[-1]}
+
+  cat <<EOF
+Usage: `basename $0` [options]
+
+Outputs $plugin_type of the filesystems on the machine.
+
+The plugin depends on \`df -h\` and the plugin output will use the
+units provided by this tool on the monitored system. Perfdata is in bytes.
+
+Options:
+-f, --exclude-filesystem  comma seperated list of filesystem types
+                          to exclude (default: tmpfs,devtmpfs,squashfs,CDRom)
+-m, --exclude-mount       comma seperated list of mounts to exclude
+EOF
+  exit 3
+}
+
+function set_args() {
+  # defaults
+  exclude_filesystems="tmpfs,devtmpfs,squashfs,CDRom"
+  exclude_mounts=""
+
+  # parse longargs
+  for arg in "$@"; do
+    shift
+    case "$arg" in
+      '--exclude-filesystem')   set -- "$@" '-f'   ;;
+      '--exclude-mount')        set -- "$@" '-m'   ;;
+      *)                        if [[ $arg == --* ]]; then echo "Illegal option: $arg"; usage; fi; set -- "$@" "$arg" ;;
+    esac
+  done
+
+  OPTIND=1
+  while getopts "f:m:h" opt
+  do
+    case "$opt" in
+      'f') exclude_filesystems=$OPTARG ;;
+      'm') exclude_mounts=$OPTARG ;;
+      'h') usage ;;
+      '?') usage ;;
+    esac
+  done
+  shift $(expr $OPTIND - 1)
+
+  # set df arguments
+  df_args=""
+
+  IFS=',' read -ra exclude_filesystems_arr <<< "$exclude_filesystems"
+
+  for i in "${exclude_filesystems_arr[@]}"
+  do
+    df_args+="-x $i "
+  done
+
+  # set exclude mount arguments
+  grep_exclude_mount=""
+  IFS=',' read -ra exclude_mounts_arr <<< "$exclude_mounts"
+  len=$((${#exclude_mounts_arr[@]}))
+  for ((i = 0 ; i < $len ; i++)); do
+    if [[ $i -ne 0 ]]; then
+      grep_exclude_mount+="\|"
+    else
+      grep_exclude_mount+="-v "
+    fi
+    grep_exclude_mount+="${exclude_mounts_arr[$i]}"
+  done
+}
+
+function get_plugin_output {
+  datakey=$1
+  if [[ $grep_exclude_mount = "" ]]; then
+    partitions=$(df $df_args --output=source | tail -n +2)
+    data=$(df -h $df_args --output=$datakey | tail -n +2)
+    perfdata=$(df -B1 $df_args --output=$datakey | tail -n +2)
+  else
+    partitions=$(df $df_args --output=source,$datakey,target | tail -n +2 | grep $grep_exclude_mount | awk '{print $1}')
+    data=$(df -h $df_args --output=source,$datakey,target | tail -n +2 | grep $grep_exclude_mount | awk '{print $2}')
+    perfdata=$(df -B1 $df_args --output=source,$datakey,target | tail -n +2 | grep $grep_exclude_mount | awk '{print $2}')
+  fi
+  partitions_arr=(`echo ${partitions}`);
+  data_arr=(`echo ${data}`);
+  perfdata_arr=(`echo ${perfdata}`);
+}

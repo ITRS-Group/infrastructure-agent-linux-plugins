@@ -1,0 +1,189 @@
+# Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+---
+commands:
+  check_apt:
+    path: "{PLUGIN_DIR}/check_apt $ARG1$"
+  check_breeze:
+    path: "{PLUGIN_DIR}/check_breeze $ARG1$"
+  check_by_ssh:
+    path: "{PLUGIN_DIR}/check_by_ssh $ARG1$"
+  check_clamd:
+    path: "{PLUGIN_DIR}/check_clamd $ARG1$"
+  check_cluster:
+    path: "{PLUGIN_DIR}/check_cluster $ARG1$"
+  check_cp_cpu_model:
+    path: "{PLUGIN_DIR}/check_cp_cpu_model $ARG1$"
+  check_cp_filesystem_capacity:
+    path: "{PLUGIN_DIR}/check_cp_filesystem_capacity $ARG1$"
+  check_cp_filesystem_utilization:
+    path: "{PLUGIN_DIR}/check_cp_filesystem_utilization $ARG1$"
+  check_cp_hardware_model:
+    path: "{PLUGIN_DIR}/check_cp_hardware_model $ARG1$"
+  check_cp_hardware_vendor:
+    path: "{PLUGIN_DIR}/check_cp_hardware_vendor $ARG1$"
+  check_cp_os:
+    path: "{PLUGIN_DIR}/check_cp_os $ARG1$"
+  check_cp_server_specification:
+    path: "{PLUGIN_DIR}/check_cp_server_specification $ARG1$"
+  check_cp_server_utilization:
+    path: "{PLUGIN_DIR}/check_cp_server_utilization $ARG1$"
+  check_cpu_stats:
+    path: "{PLUGIN_DIR}/check_cpu_stats $ARG1$"
+  check_dhcp:
+    path: "{PLUGIN_DIR}/check_dhcp $ARG1$"
+  check_dig:
+    path: "{PLUGIN_DIR}/check_dig $ARG1$"
+  check_dir_age:
+    path: "{PLUGIN_DIR}/check_dir_age $ARG1$"
+  check_disk:
+    path: "{PLUGIN_DIR}/check_disk $ARG1$"
+  check_disk_smb:
+    path: "{PLUGIN_DIR}/check_disk_smb $ARG1$"
+  check_dns:
+    path: "{PLUGIN_DIR}/check_dns $ARG1$"
+  check_docker:
+    path: "{PLUGIN_DIR}/check_docker $ARG1$"
+  check_dummy:
+    path: "{PLUGIN_DIR}/check_dummy $ARG1$"
+  check_etcd:
+    path: "{PLUGIN_DIR}/check_etcd $ARG1$"
+  check_file_age:
+    path: "{PLUGIN_DIR}/check_file_age $ARG1$"
+  check_file_count:
+    path: "{PLUGIN_DIR}/check_file_count $ARG1$"
+  check_flexlm:
+    path: "{PLUGIN_DIR}/check_flexlm $ARG1$"
+  check_ftp:
+    path: "{PLUGIN_DIR}/check_ftp $ARG1$"
+  check_haproxy:
+    path: "{PLUGIN_DIR}/check_haproxy $ARG1$"
+  check_hpjd:
+    path: "{PLUGIN_DIR}/check_hpjd $ARG1$"
+  check_http:
+    path: "{PLUGIN_DIR}/check_http $ARG1$"
+  check_icmp:
+    path: "{PLUGIN_DIR}/check_icmp $ARG1$"
+  check_ide_smart:
+    path: "{PLUGIN_DIR}/check_ide_smart $ARG1$"
+  check_ifoperstatus:
+    path: "{PLUGIN_DIR}/check_ifoperstatus $ARG1$"
+  check_ifstatus:
+    path: "{PLUGIN_DIR}/check_ifstatus $ARG1$"
+  check_imap:
+    path: "{PLUGIN_DIR}/check_imap $ARG1$"
+  check_ircd:
+    path: "{PLUGIN_DIR}/check_ircd $ARG1$"
+  check_jabber:
+    path: "{PLUGIN_DIR}/check_jabber $ARG1$"
+  check_ldap:
+    path: "{PLUGIN_DIR}/check_ldap $ARG1$"
+  check_ldaps:
+    path: "{PLUGIN_DIR}/check_ldaps $ARG1$"
+  check_load:
+    path: "{PLUGIN_DIR}/check_load $ARG1$"
+  check_log:
+    path: "{PLUGIN_DIR}/check_log $ARG1$"
+  check_log.sh:
+    path: "{PLUGIN_DIR}/check_log.sh $ARG1$"
+  check_macosx_memory:
+    path: "{PLUGIN_DIR}/check_macosx_memory $ARG1$"
+  check_macosx_sensors:
+    path: "{PLUGIN_DIR}/check_macosx_sensors $ARG1$"
+  check_mailq:
+    path: "{PLUGIN_DIR}/check_mailq $ARG1$"
+  check_memory:
+    path: "{PLUGIN_DIR}/check_memory $ARG1$"
+  check_memory_solaris:
+    path: "{PLUGIN_DIR}/check_memory_solaris $ARG1$"
+  check_mrtg:
+    path: "{PLUGIN_DIR}/check_mrtg $ARG1$"
+  check_mrtgtraf:
+    path: "{PLUGIN_DIR}/check_mrtgtraf $ARG1$"
+  check_mysql:
+    path: "{PLUGIN_DIR}/check_mysql $ARG1$"
+  check_mysql_query:
+    path: "{PLUGIN_DIR}/check_mysql_query $ARG1$"
+  check_nagios:
+    path: "{PLUGIN_DIR}/check_nagios $ARG1$"
+  check_nntp:
+    path: "{PLUGIN_DIR}/check_nntp $ARG1$"
+  check_nntps:
+    path: "{PLUGIN_DIR}/check_nntps $ARG1$"
+  check_nt:
+    path: "{PLUGIN_DIR}/check_nt $ARG1$"
+  check_ntp:
+    path: "{PLUGIN_DIR}/check_ntp $ARG1$"
+  check_ntp_peer:
+    path: "{PLUGIN_DIR}/check_ntp_peer $ARG1$"
+  check_ntp_time:
+    path: "{PLUGIN_DIR}/check_ntp_time $ARG1$"
+  check_nwstat:
+    path: "{PLUGIN_DIR}/check_nwstat $ARG1$"
+  check_opsview:
+    path: "{PLUGIN_DIR}/check_opsview $ARG1$"
+  check_opsview_datastore:
+    path: "{PLUGIN_DIR}/check_opsview_datastore $ARG1$"
+  check_oracle:
+    path: "{PLUGIN_DIR}/check_oracle $ARG1$"
+  check_oracle.sh:
+    path: "{PLUGIN_DIR}/check_oracle.sh $ARG1$"
+  check_overcr:
+    path: "{PLUGIN_DIR}/check_overcr $ARG1$"
+  check_ping:
+    path: "{PLUGIN_DIR}/check_ping $ARG1$"
+  check_pop:
+    path: "{PLUGIN_DIR}/check_pop $ARG1$"
+  check_postgres:
+    path: "{PLUGIN_DIR}/check_postgres $ARG1$"
+  check_procs:
+    path: "{PLUGIN_DIR}/check_procs $ARG1$"
+  check_rabbitmq_node:
+    path: "{PLUGIN_DIR}/check_rabbitmq_node $ARG1$"
+  check_radius_ih:
+    path: "{PLUGIN_DIR}/check_radius_ih $ARG1$"
+  check_raid:
+    path: "{PLUGIN_DIR}/check_raid $ARG1$"
+  check_real:
+    path: "{PLUGIN_DIR}/check_real $ARG1$"
+  check_ro_mounts:
+    path: "{PLUGIN_DIR}/check_ro_mounts $ARG1$"
+  check_rpc:
+    path: "{PLUGIN_DIR}/check_rpc $ARG1$"
+  check_sensors:
+    path: "{PLUGIN_DIR}/check_sensors $ARG1$"
+  check_sensors.sh:
+    path: "{PLUGIN_DIR}/check_sensors.sh $ARG1$"
+  check_simap:
+    path: "{PLUGIN_DIR}/check_simap $ARG1$"
+  check_smart:
+    path: "{PLUGIN_DIR}/check_smart $ARG1$"
+  check_smtp:
+    path: "{PLUGIN_DIR}/check_smtp $ARG1$"
+  check_snmp:
+    path: "{PLUGIN_DIR}/check_snmp $ARG1$"
+  check_spop:
+    path: "{PLUGIN_DIR}/check_spop $ARG1$"
+  check_ssh:
+    path: "{PLUGIN_DIR}/check_ssh $ARG1$"
+  check_ssmtp:
+    path: "{PLUGIN_DIR}/check_ssmtp $ARG1$"
+  check_swap:
+    path: "{PLUGIN_DIR}/check_swap $ARG1$"
+  check_tcp:
+    path: "{PLUGIN_DIR}/check_tcp $ARG1$"
+  check_time:
+    path: "{PLUGIN_DIR}/check_time $ARG1$"
+  check_time_skew:
+    path: "{PLUGIN_DIR}/check_time_skew $ARG1$"
+  check_udp:
+    path: "{PLUGIN_DIR}/check_udp $ARG1$"
+  check_ups:
+    path: "{PLUGIN_DIR}/check_ups $ARG1$"
+  check_users:
+    path: "{PLUGIN_DIR}/check_users $ARG1$"
+  check_varnish:
+    path: "{PLUGIN_DIR}/check_varnish $ARG1$"
+  check_wave:
+    path: "{PLUGIN_DIR}/check_wave $ARG1$"
+  check_zfs_usage:
+    path: "{PLUGIN_DIR}/check_zfs_usage $ARG1$"

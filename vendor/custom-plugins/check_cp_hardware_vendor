@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+set -eu
+trap 'echo "METRIC UNKNOWN: Integration impacted: could not retrieve physical server hardware vendor"; exit 3' ERR
+
+# get rid of stderr messages
+exec 2> /dev/null
+
+usage()
+{
+  cat <<EOF
+    Usage: `basename $0`
+
+    Outputs the hardware vendor of the machine (/sys/devices/virtual/dmi/id/sys_vendor).
+EOF
+  exit 3
+}
+
+
+OPTIND=1
+while getopts "h" opt
+do
+  case "$opt" in
+    'h') usage ;;
+    '?') usage ;;
+  esac
+done
+shift $(expr $OPTIND - 1)
+
+# If vendor not present then fail
+[ -f /sys/devices/virtual/dmi/id/sys_vendor ]
+
+vendor="$(cat /sys/devices/virtual/dmi/id/sys_vendor)"
+
+# Trim leading/trailing whitespace
+vendor="$(echo "$vendor" | sed -E 's/(^[[:space:]]*|[[:space:]]*$)//g')"
+
+# Fail if we got no data
+[ -n "$vendor" ]
+
+echo "METRIC OK: $vendor"

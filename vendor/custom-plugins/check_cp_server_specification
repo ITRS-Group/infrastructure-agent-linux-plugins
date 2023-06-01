@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+set -eu
+trap 'echo "METRIC UNKNOWN: Integration broken: could not retrieve physical server specification"; exit 3' ERR
+
+# get rid of stderr messages
+exec 2> /dev/null
+
+usage()
+{
+  cat <<EOF
+Usage: `basename $0`
+
+Outputs: Physical CPU count, logical core count, CPU clock speed(MHz), memory capacity.
+
+The plugin depends on \`free -h\` for memory related operations and will use the units
+provided by this tool on the monitored system. Perfdata is in bytes.
+EOF
+  exit 3
+}
+
+
+OPTIND=1
+while getopts "h" opt
+do
+  case "$opt" in
+    'h') usage ;;
+    '?') usage ;;
+  esac
+done
+shift $(expr $OPTIND - 1)
+
+# cores
+if [ $(uname) = 'Darwin' ];
+then
+  core_phy=$(sysctl -n hw.physicalcpu_max)
+  core_loc=$(sysctl -n hw.logicalcpu_max)
+else
+  core_phy=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
+  core_loc=$(lscpu -p | egrep -v '^#' | wc -l)
+fi
+
+# number of cores must be above 0
+[ $core_phy -gt 0 ]
+[ $core_loc -gt 0 ]
+
+# cpu freq
+cpu_freqs=($(cat /proc/cpuinfo | grep "cpu MHz" | cut -f3 -d " "))
+
+# fail if array is empty
+(( ${#cpu_freqs[@]} ))
+
+cpu_freq_sum=0
+
+for i in "${cpu_freqs[@]}"
+do
+   :
+   cpu_freq_sum=$(echo $cpu_freq_sum $i | awk '{ printf "%f", $1 + $2 }')
+done
+
+cpu_freq_avg=$(echo $cpu_freq_sum ${#cpu_freqs[@]} | awk '{ printf "%d", $1/$2}')MHz
+
+# memory
+memory_b=$(free -b | grep -Po 'Mem:\s*\K\d+')B
+memory_h=$(free -h | grep "Mem" | awk '{print $2}')
+
+echo "METRIC OK: Physical Cores is $core_phy, Logical Cores is $core_loc, Memory Capacity is $memory_h, CPU Clock Speed is $cpu_freq_avg | 'Physical Cores'=$core_phy 'Logical Cores'=$core_loc 'Memory Capacity'=$memory_b 'CPU Clock Speed'=$cpu_freq_avg"

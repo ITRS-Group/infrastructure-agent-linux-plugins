@@ -1,0 +1,55 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+set -eu
+trap 'echo "METRIC UNKNOWN: Integration impacted: could not retrieve physical server hardware model"; exit 3' ERR
+
+# get rid of stderr messages
+exec 2> /dev/null
+
+usage()
+{
+  cat <<EOF
+Usage: `basename $0`
+
+Outputs the hardware model (/sys/devices/virtual/dmi/id/product_name and/or /sys/devices/virtual/dmi/id/product_sku)
+EOF
+  exit 3
+}
+
+
+OPTIND=1
+while getopts "h" opt
+do
+  case "$opt" in
+    'h') usage ;;
+    '?') usage ;;
+  esac
+done
+shift $(expr $OPTIND - 1)
+
+# If neither is present then fail
+[ -f /sys/devices/virtual/dmi/id/product_name ] || [ -f /sys/devices/virtual/dmi/id/product_sku ]
+
+name=""
+sku=""
+
+if [ -f /sys/devices/virtual/dmi/id/product_name ]; then
+  name="$(cat /sys/devices/virtual/dmi/id/product_name)"
+fi
+
+if [ -f /sys/devices/virtual/dmi/id/product_sku ]; then
+  sku="$(cat /sys/devices/virtual/dmi/id/product_sku)"
+fi
+
+model="$name $sku"
+
+# Trim leading/trailing whitespace
+model="$(echo "$model" | sed -E 's/(^[[:space:]]*|[[:space:]]*$)//g')"
+
+# Fail if we got no data
+[ -n "$model" ]
+
+echo "METRIC OK: $model"

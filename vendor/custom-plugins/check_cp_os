@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+set -eu
+trap 'echo "METRIC UNKNOWN: Integration impacted: could not retrieve physical server operating system"; exit 3' ERR
+
+# get rid of stderr messages
+exec 2> /dev/null
+
+usage()
+{
+  cat <<EOF
+Usage: `basename $0`
+
+Outputs the OS name (NAME and VERSION from /etc/os-release).
+EOF
+  exit 3
+}
+
+
+OPTIND=1
+while getopts "h" opt
+do
+  case "$opt" in
+    'h') usage ;;
+    '?') usage ;;
+  esac
+done
+shift $(expr $OPTIND - 1)
+
+# Fail if command doesn't work or we can't extract what we expect, and sed to trim leading/trailing whitespace
+os="$(source /etc/os-release && echo "$NAME $VERSION" | sed -E 's/(^[[:space:]]*|[[:space:]]*$)//g')"
+
+# Fail if we got no data
+[ -n "$os" ]
+
+echo "METRIC OK: $os"

@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+set -eu
+trap 'echo "METRIC UNKNOWN: Integration broken: could not retrieve physical server filesystem utilization"; exit 3' ERR
+
+# get rid of stderr messages
+exec 2> /dev/null
+
+script_path=$(realpath $0)
+script_path=$(dirname $script_path)
+
+source $script_path/filesystem_utils
+
+set_args "$@"
+
+get_plugin_output "pcent"
+
+output="METRIC OK: Unix Filesystem Storage Utilization "
+
+len=$((${#data_arr[@]}))
+
+#stdout
+for ((i = 0 ; i < $len ; i++)); do
+  output+="${partitions_arr[$i]} is ${data_arr[$i]}"
+  if [[ $i -le $(($len-2)) ]];
+  then
+    output+=", "
+  fi
+done
+
+# perfdata
+output+=" |"
+for ((i = 0 ; i < $len ; i++)); do
+  output+=" ${partitions_arr[$i]}=${perfdata_arr[$i]}"
+done
+
+echo $output
+
+exit 0

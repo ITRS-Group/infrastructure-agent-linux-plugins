@@ -1,0 +1,617 @@
+#!/usr/bin/perl -w
+#
+# AUTHORS:
+#	Copyright (C) 2003-2023 Opsview Limited. All rights reserved
+#
+#	 This file is part of Opsview
+#
+# This will check docker for a veriety of parameters
+
+use warnings;
+use strict;
+use lib "/opt/itrs/infrastructure-agent/plugins/perl/lib", "/opt/opsview/perl/lib/perl5";
+use JSON;
+use Monitoring::Plugin qw(OK UNKNOWN %ERRORS %STATUS_TEXT);
+use LWP;
+
+my $CheckList =
+  "AllContainers\nTotalContainers\nUptime\nCPU\nMemory\nContainerSize\nTop";
+
+#Create nagios plugin
+my $np = Monitoring::Plugin->new(
+    version => 1.01,
+    shortname => "Docker",
+    usage =>
+      "Usage: \"%s -l <Check> -C <Container> -w <Warning> -c <Critical>\" Checks can be found in the help section",
+    blurb => "Check for Docker status\n",
+    extra => "NONE",
+);
+
+#Arguments
+$np->add_arg(
+    spec => 'check|l=s',
+    help => "-l=check. This plugin includes the following checks:
+AllContainers (default if no parameter specified) - Lists all containers
+TotalContainers - Lists total, running and stopped containers
+Uptime - List the uptime of containers, defaults to all containers unless the container parameter is specified
+CPU - List the total current CPU usage of containers, defaults to all containers unless the container parameter is specified
+Memory - List the current total memory usage of containers, defaults to all containers unless the container parameter is specified
+ContainerSize - List the current size of containers, defaults to all containers unless the container parameter is specified
+Top - List the running proccesses of containers, defaults to all containers unless the container parameter is specified",
+    required => 0,
+);
+
+$np->add_arg(
+    spec => "url_prefix|H=s",
+    help =>
+      "--url_prefix=URL. URL prefix for API access. If not specified http://127.0.0.1 will be used",
+);
+
+$np->add_arg(
+    spec => "port|p=s",
+    help =>
+      "--port=PORT. Port for API access. If not specified default port 4243 will be used",
+);
+
+$np->add_arg(
+    spec => "container|C=s@",
+    help =>
+      "--container=CONTAINER. Container name. If not specified all containers will be matched
+	Multiple services or components are supported by simply separating the entries by commas or by repeating the parameter:
+	i.e. 	[-C Container1,Container2,Container3]
+		[-C Container1 -C Container2 -C Container3]",
+);
+
+$np->add_arg(
+    spec => "critical|c=s",
+    help => "--critical=RANGE | -c If below this value raise a CRITICAL",
+);
+
+$np->add_arg(
+    spec => "warning|w=s",
+    help => "--warning=RANGE | -w If below this value raise a WARNING",
+);
+
+$np->add_arg(
+    spec => "ssl_ca_file=s",
+    help => "--ssl_ca_file=/path/to/SSL/ca.pem - Path to certificate authority file",
+);
+
+$np->add_arg(
+    spec => "ssl_cert_file=s",
+    help => "--ssl_cert_file=/path/to/client_certificate_cert.pem - Path to client certificate",
+);
+
+$np->add_arg(
+    spec => "ssl_key_file=s",
+    help => "--ssl_key_file=/path/to/client_certificate_key.pem - Path to client key",
+);
+
+$np->add_arg(
+    spec => "ssl_verify_hostame=i",
+    help => "--ssl_verify_hostame=<0|1> - Enable/disable SSL certificate hostname verification",
+    default => 0,
+);
+
+$np->getopts;
+
+my $Check      = $np->opts->check      || "AllContainers";
+my $url_prefix = $np->opts->url_prefix || "http://127.0.0.1";
+if ( $url_prefix !~ m'^https?:\/\/' ) { #if no http:// or https:// add it on
+    $url_prefix = "http://$url_prefix";
+}
+my $port     = $np->opts->port     || 4243;
+my $warning  = $np->opts->warning  || -1;
+my $critical = $np->opts->critical || -1;
+my %Containers = map { $_ => 1 } @{ $np->opts->container }
+  if ( $np->opts->container );
+
+# if one option is provided then all must be provided
+my %ssl_opts = (
+    verify_hostname => $np->opts->ssl_verify_hostame,
+);
+$ssl_opts{SSL_ca_file} =  $np->opts->ssl_ca_file if($np->opts->ssl_ca_file);
+$ssl_opts{SSL_cert_file} = $np->opts->ssl_cert_file if($np->opts->ssl_cert_file);
+$ssl_opts{SSL_key_file} = $np->opts->ssl_key_file if($np->opts->ssl_key_file);
+
+unless ($Check) {
+    $np->nagios_die(
+        "Missing argument: Check (-l) The following checks are availible: \n\n$CheckList"
+    );
+}
+
+if ( $np->opts->critical && $np->opts->warning ) {
+    if ( $np->opts->critical < $np->opts->warning ) {
+        $np->nagios_die( "warning can not be more than critical" );
+    }
+}
+
+if (   ( grep { $_ eq lc $Check } qw( allcontainers top totalcontainers ) )
+    && ( $warning != -1 || $critical != -1 ) )
+{
+    $np->nagios_die( "$Check does not support warning or critical arguments" );
+}
+
+if ( ( grep { $_ eq lc $Check } qw( allcontainers totalcontainers ) )
+    && scalar keys %Containers != 0 )
+{
+    $np->nagios_die(
+        "$Check does not support the container argument, all containers are listed"
+    );
+}
+
+if ( lc $Check eq 'allcontainers' ) {
+    AllContainers();
+}
+elsif ( lc $Check eq 'totalcontainers' ) {
+    TotalContainers();
+}
+elsif ( lc $Check eq 'uptime' ) {
+    ContainerUptime();
+}
+elsif ( lc $Check eq 'containersize' ) {
+    ContainerSize();
+}
+elsif ( lc $Check eq 'cpu' ) {
+    if ( $np->opts->warning ) {
+        if ( $np->opts->warning > 100 || $np->opts->warning < 0 ) {
+            $np->nagios_die(
+                "warning is a percentage so must be between 0 and 100"
+            );
+        }
+    }
+    if ( $np->opts->critical ) {
+        if ( $np->opts->critical > 100 || $np->opts->critical < 0 ) {
+            $np->nagios_die(
+                "critical is a percentage so must be between 0 and 100"
+            );
+        }
+    }
+    ContainerCPU();
+}
+elsif ( lc $Check eq 'top' ) {
+    ContainerTop();
+}
+elsif ( lc $Check eq 'memory' ) {
+    ContainerMemory();
+}
+else {
+    $np->nagios_die(
+        "Invalid Check Option - $Check\n\nThe following checks are availible: \n\n$CheckList"
+    );
+}
+
+sub AllContainers {
+    my $JSONObj = APIContent( '/containers/json?all=1' );
+    my $ReturnString;
+    my %ReturnPerf;
+    foreach (@$JSONObj) {
+        my $ContainerNames = join( ", ", @{ $_->{'Names'} } );
+        $ContainerNames =~ s'^/'';
+        $ContainerNames =~ s', /', 'g;
+        $ReturnString .= "Container: " . $ContainerNames . "\n";
+    }
+    $np->nagios_exit( "OK", $ReturnString );
+}
+
+sub TotalContainers {
+    my $JSONObj      = APIContent( '/containers/json?all=1' );
+    my $ReturnString = "";
+    my $ReturnState  = "OK";
+    my $Total        = 0;
+    my $Up           = 0;
+    my $Down         = 0;
+    my %ReturnPerf;
+    foreach (@$JSONObj) {
+        $Total++;
+        if ( $_->{'Status'} =~ m/Up/ ) {
+            $Up++;
+        }
+        elsif ( $_->{'Status'} =~ m/Exited/ ) {
+            $Down++;
+        }
+        else {
+            $ReturnState = "WARNING";
+            $ReturnString =
+              "Unknown state for container " . @{ $_->{'Names'} } . " ";
+        }
+    }
+    $ReturnPerf{'label'} = "Total";
+    $ReturnPerf{'value'} = $Total;
+    $ReturnPerf{'uom'}   = 'Containers';
+    $np->add_perfdata( %ReturnPerf );
+    $ReturnPerf{'label'} = "Running";
+    $ReturnPerf{'value'} = $Up;
+    $ReturnPerf{'uom'}   = 'Containers';
+    $np->add_perfdata( %ReturnPerf );
+    $ReturnPerf{'label'} = "Down";
+    $ReturnPerf{'value'} = $Down;
+    $ReturnPerf{'uom'}   = 'Containers';
+    $np->add_perfdata( %ReturnPerf );
+    $ReturnString
+      .= "Total Containers - $Total, Running Containers - $Up, Containers Down - $Down";
+    $np->nagios_exit( $ReturnState, $ReturnString );
+}
+
+sub ContainerUptime {
+    my $JSONObj      = APIContent( '/containers/json?all=1' );
+    my $ReturnString = "";
+    my $ReturnState  = "OK";
+    my %ReturnPerf;
+    my $ReturnCount = 0;
+    foreach (@$JSONObj) {
+        my $ContainerNames = join( ", ", @{ $_->{'Names'} } );
+        $ContainerNames =~ s'^/'';
+        $ContainerNames =~ s', /', 'g;
+        if (   $Containers{$_}
+            || $Containers{$ContainerNames}
+            || scalar keys %Containers == 0 )
+        {
+            $ReturnString
+              .= "Container: "
+              . $ContainerNames
+              . " Status: "
+              . $_->{'Status'} . "\n";
+            $ReturnPerf{'label'} = $ContainerNames;
+            ( $ReturnPerf{'value'}, $ReturnPerf{'uom'} ) =
+              sprintf( "%.2f", DecodeTimeString( $_->{'Status'} ) );
+            $np->add_perfdata( %ReturnPerf );
+            CheckReturn( \$ReturnState,
+                ( DecodeTimeString( $_->{'Status'} ) )[0], 'lt' );
+            $ReturnCount++;
+        }
+    }
+    if ( $ReturnCount == 0 ) {
+        $ReturnState  = "CRITICAL";
+        $ReturnString = "No containers matched container argument";
+    }
+    $np->nagios_exit( $ReturnState, $ReturnString );
+}
+
+sub ContainerSize {
+    my $JSONObj      = APIContent( '/containers/json?all=1&size=1' );
+    my $ReturnString = "";
+    my %ReturnPerf;
+    my $ReturnState = "OK";
+    my $ReturnCount = 0;
+    foreach (@$JSONObj) {
+        my $ContainerNames = join( ", ", @{ $_->{'Names'} } );
+        $ContainerNames =~ s'^/'';
+        $ContainerNames =~ s', /', 'g;
+        if (   $Containers{$_}
+            || $Containers{$ContainerNames}
+            || scalar keys %Containers == 0 )
+        {
+            $ReturnString
+              .= ""
+              . $ContainerNames
+              . " Size: "
+              . join( ' ', DecodeSize( $_->{'SizeRw'} ) ) . "\n";
+            $ReturnPerf{'label'} = $ContainerNames;
+            $ReturnPerf{'value'} =
+              sprintf( "%.2f", ( ( $_->{'SizeRw'} / 1024 ) / 1024 ) );
+            $ReturnPerf{'uom'} = 'MB';
+            $np->add_perfdata( %ReturnPerf );
+            CheckReturn( \$ReturnState, ( ( $_->{'SizeRw'} / 1024 ) / 1024 ) );
+            $ReturnCount++;
+        }
+    }
+    if ( $ReturnCount == 0 ) {
+        $ReturnState  = "CRITICAL";
+        $ReturnString = "No containers matched container argument";
+    }
+    $np->nagios_exit( $ReturnState, $ReturnString );
+}
+
+sub ContainerCPU {
+    my $ContainerToIDHash = NameToUpContainerID();
+    my $Return            = "";
+    my %ReturnPerf;
+    my $ReturnState = 'OK';
+    my $ReturnCount = 0;
+    foreach ( keys %{$ContainerToIDHash} ) {
+        my $ContainerName = $_;
+        $ContainerName =~ s'^/'';
+        $ContainerName =~ s', /', 'g;
+        if (   $Containers{$_}
+            || $Containers{$ContainerName}
+            || scalar keys %Containers == 0 )
+        {
+            my $JSONObj = APIContent(
+                "/containers/" . $ContainerToIDHash->{$_} . "/top?ps_args=aux"
+            );
+            my $CPUArrLocation = 0;
+            ++$CPUArrLocation
+              until $JSONObj->{'Titles'}[$CPUArrLocation] eq '%CPU'
+              or $CPUArrLocation > $#{ $JSONObj->{'Titles'} };
+            my $CPUTotal = 0;
+            foreach ( @{ $JSONObj->{'Processes'} } ) {
+                $CPUTotal += $_->[$CPUArrLocation];
+            }
+            $Return
+              .= "Container: " . $ContainerName . " CPU: " . $CPUTotal . "%\n";
+            $ReturnPerf{'label'} = $ContainerName;
+            $ReturnPerf{'value'} = sprintf( "%.2f", $CPUTotal );
+            $ReturnPerf{'uom'}   = '%';
+            $np->add_perfdata( %ReturnPerf );
+            CheckReturn( \$ReturnState, $CPUTotal );
+            $ReturnCount++;
+        }
+    }
+    if ( $ReturnCount == 0 ) {
+        $ReturnState = "CRITICAL";
+        $Return      = "No running containers matched container argument";
+    }
+    $np->nagios_exit( $ReturnState, "$Return" );
+}
+
+sub ContainerMemory {
+    my $ContainerToIDHash = NameToUpContainerID();
+    my %ReturnPerf;
+    my $Return      = "";
+    my $ReturnState = 'OK';
+    my $ReturnCount = 0;
+    foreach ( keys %{$ContainerToIDHash} ) {
+        my $ContainerName = $_;
+        $ContainerName =~ s'^/'';
+        $ContainerName =~ s', /', 'g;
+        if (   $Containers{$_}
+            || $Containers{$ContainerName}
+            || scalar keys %Containers == 0 )
+        {
+            my $JSONObj = APIContent(
+                "/containers/" . $ContainerToIDHash->{$_} . "/top?ps_args=aux"
+            );
+            my $MemArrLocation = 0;
+            ++$MemArrLocation
+              until $JSONObj->{'Titles'}[$MemArrLocation] eq '%MEM'
+              or $MemArrLocation > $#{ $JSONObj->{'Titles'} };
+            my $MemTotal = 0;
+            foreach ( @{ $JSONObj->{'Processes'} } ) {
+                $MemTotal += $_->[$MemArrLocation];
+            }
+            $ReturnPerf{'label'} = $ContainerName;
+            $ReturnPerf{'value'} = sprintf( "%.2f", $MemTotal );
+            $ReturnPerf{'uom'}   = '%';
+            $np->add_perfdata( %ReturnPerf );
+            $Return
+              .= "Container: "
+              . $ContainerName
+              . " Memory: "
+              . $MemTotal . "%\n";
+            CheckReturn( \$ReturnState, $MemTotal );
+            $ReturnCount++;
+        }
+    }
+    if ( $ReturnCount == 0 ) {
+        $ReturnState = "CRITICAL";
+        $Return      = "No running containers matched container argument";
+    }
+    $np->nagios_exit( $ReturnState, "$Return" );
+}
+
+sub ContainerTop {
+    my $ContainerToIDHash = NameToUpContainerID();
+    my $Return            = "";
+    my $ReturnState       = "OK";
+    my $ReturnCount       = 0;
+    foreach ( keys %{$ContainerToIDHash} ) {
+        my $ContainerName = $_;
+        $ContainerName =~ s'^/'';
+        $ContainerName =~ s', /', 'g;
+        if (   $Containers{$_}
+            || $Containers{$ContainerName}
+            || scalar keys %Containers == 0 )
+        {
+            $Return .= "Container - $ContainerName\n";
+            my $JSONObj = APIContent(
+                "/containers/" . $ContainerToIDHash->{$_} . "/top?ps_args=aux"
+            );
+            my $CPUArrLocation = 0;
+            ++$CPUArrLocation
+              until $JSONObj->{'Titles'}[$CPUArrLocation] eq '%CPU'
+              or $CPUArrLocation > $#{ $JSONObj->{'Titles'} };
+            my $MemArrLocation = 0;
+            ++$MemArrLocation
+              until $JSONObj->{'Titles'}[$MemArrLocation] eq '%MEM'
+              or $MemArrLocation > $#{ $JSONObj->{'Titles'} };
+            my $CommandArrLocation = 0;
+            ++$CommandArrLocation
+              until $JSONObj->{'Titles'}[$CommandArrLocation] eq 'COMMAND'
+              or $CommandArrLocation > $#{ $JSONObj->{'Titles'} };
+
+            foreach ( @{ $JSONObj->{'Processes'} } ) {
+                $Return .= "    Process " . $_->[$CommandArrLocation] . " ";
+                $Return .= "CPU " . $_->[$CPUArrLocation] . " ";
+                $Return .= "Memory " . $_->[$MemArrLocation] . "\n";
+            }
+            $ReturnCount++;
+        }
+    }
+    if ( $ReturnCount == 0 ) {
+        $ReturnState = "CRITICAL";
+        $Return      = "No running containers matched container argument";
+    }
+    $np->nagios_exit( $ReturnState, "$Return" );
+}
+
+sub NameToContainerID {
+    my $JSONObj = APIContent( '/containers/json?all=1' );
+    my %ContainerToID;
+    foreach (@$JSONObj) {
+        my $Obj = $_;
+        foreach ( @{ $_->{'Names'} } ) {
+            $ContainerToID{$_} = $Obj->{'Id'};
+        }
+    }
+    return \%ContainerToID;
+}
+
+sub NameToUpContainerID {
+    my $JSONObj = APIContent( '/containers/json?all=1' );
+    my %ContainerToID;
+    foreach (@$JSONObj) {
+        my $Obj = $_;
+        foreach ( @{ $_->{'Names'} } ) {
+            if ( $Obj->{'Status'} =~ m/Up/ ) {
+                $ContainerToID{$_} = $Obj->{'Id'};
+            }
+        }
+    }
+    return \%ContainerToID;
+}
+
+sub DecodeSize {
+    if ( $_[0] > 1024 ) { #in the order of Bytes
+        if ( ( $_[0] / 1024 ) > 1024 ) { #in the order of KB
+            if ( ( ( $_[0] / 1024 ) / 1024 ) > 1024 ) { #in the order of MB
+                return (
+                    sprintf( "%.2f", ( ( ( $_[0] / 1024 ) / 1024 ) / 1024 ) ),
+                    'GB' );
+            }
+            else {
+                return ( sprintf( "%.2f", ( ( $_[0] / 1024 ) / 1024 ) ), 'MB'
+                );
+            }
+        }
+        else {
+            return ( sprintf( "%.2f", ( $_[0] / 1024 ) ), 'KB' );
+        }
+    }
+    else {
+        return ( $_[0], 'Bytes' );
+    }
+}
+
+sub DecodeSizeKB {
+    if ( $_[0] > 1024 ) { #in the order of Bytes
+        if ( ( $_[0] / 1024 ) > 1024 ) { #in the order of KB
+            if ( ( ( $_[0] / 1024 ) / 1024 ) > 1024 ) { #in the order of MB
+                return (
+                    sprintf( "%.2f", ( ( ( $_[0] / 1024 ) / 1024 ) / 1024 ) ),
+                    'TB' );
+            }
+            else {
+                return ( sprintf( "%.2f", ( ( $_[0] / 1024 ) / 1024 ) ), 'GB'
+                );
+            }
+        }
+        else {
+            return ( sprintf( "%.2f", ( $_[0] / 1024 ) ), 'MB' );
+        }
+    }
+    else {
+        return ( $_[0], 'KB' );
+    }
+}
+
+sub DecodeTimeString {
+    if ( $_[0] =~ m/Exited/ ) {
+        return ( 0, 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up (\d+) minute/ ) {
+        return ( 0, 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up (\d+) hour/ ) {
+        return ( ( $1 / 24 ), 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up (\d+) day/ ) {
+        return ( $1, 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up (\d+) week/ ) {
+        return ( ( $1 * 7 ), 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up (\d+) month/ ) {
+        return ( ( $1 * 29.60 ), 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up (\d+) year/ ) {
+        return ( ( $1 * 365 ), 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up About a minute/ ) {
+        return ( 0, 'Days' );
+    }
+    elsif ( $_[0] =~ m/Up About an hour/ ) {
+        return ( ( 1 / 24 ), 'Days' );
+    }
+    else {
+        $np->nagios_die( "Invalid time string: " . $_[0] . "" );
+    }
+}
+
+sub APIContent {
+    my $URI = $_[0];
+    my $ua  = LWP::UserAgent->new(ssl_opts => \%ssl_opts);
+    $ua->agent( "Opsview" );
+
+    # Create a request
+    my $req = HTTP::Request->new(
+        GET => "$url_prefix:$port$URI"
+    );
+    $req->content_type( 'application/x-www-form-urlencoded' );
+    $req->content( 'query=libwww-perl&mode=dist' );
+    my $res = $ua->request($req);
+
+    if ( $res->is_success ) {
+        my $containers = eval { decode_json( $res->content ) };
+        if($@) {
+            die "$@ : Received ",$res->content;
+        }
+        return $containers;
+    }
+    else {
+        $np->nagios_die(
+            "Error returned from Docker API: " . $res->status_line . ""
+        );
+    }
+}
+
+sub APIStats {
+    my $URI = $_[0];
+    my $ua  = LWP::UserAgent->new(ssl_opts => \%ssl_opts);
+    $ua->agent( "Opsview" );
+
+    # Create a request
+    my $req = HTTP::Request->new(
+        GET => "$url_prefix:$port$URI"
+    );
+    $req->content_type( 'application/x-www-form-urlencoded' );
+    $req->content( 'query=libwww-perl&mode=dist' );
+    my $res = $ua->request($req);
+
+    if ( $res->is_success ) {
+        my $containers = decode_json( $res->content );
+        return $containers;
+    }
+    else {
+        $np->nagios_die(
+            "Error returned from Docker API: " . $res->status_line . ""
+        );
+    }
+}
+
+sub CheckReturn {
+    my $ReturnStateRef   = $_[0];
+    my $Comparison       = $_[1];
+    my $MoreThanLessThan = $_[2] || 'mt';
+
+    if ( $critical != -1 ) {
+        if ( $critical < $Comparison && $MoreThanLessThan eq 'mt' ) {
+            $$ReturnStateRef = "CRITICAL";
+            return;
+        }
+        if ( $critical > $Comparison && $MoreThanLessThan eq 'lt' ) {
+            $$ReturnStateRef = "CRITICAL";
+            return;
+        }
+    }
+    if ( $warning != -1 ) {
+        if ( $warning < $Comparison && $MoreThanLessThan eq 'mt' ) {
+            $$ReturnStateRef = "WARNING";
+            return;
+        }
+        if ( $warning > $Comparison && $MoreThanLessThan eq 'lt' ) {
+            $$ReturnStateRef = "WARNING";
+            return;
+        }
+    }
+}

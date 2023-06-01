@@ -1,0 +1,36 @@
+diff -ur nagios-plugins-1.4.17-dev.original/plugins-scripts/check_disk_smb.pl nagios-plugins-1.4.17-dev/plugins-scripts/check_disk_smb.pl
+--- nagios-plugins-1.4.17-dev.original/plugins-scripts/check_disk_smb.pl	2014-07-30 17:19:00.441888915 +0000
++++ nagios-plugins-1.4.17-dev/plugins-scripts/check_disk_smb.pl	2014-07-30 17:24:15.733873845 +0000
+@@ -120,6 +120,8 @@
+ my ($warning)   = $ng->warning;
+ my ($critical)  = $ng->critical;
+ 
++$0 = "$0 $host args hidden";
++
+ my ( $verbose, $warn, $crit );
+ 
+ $ENV{'PATH'}     = '';
+Only in nagios-plugins-1.4.17-dev.original/plugins-scripts: .check_disk_smb.pl.swp
+diff -ur nagios-plugins-1.4.17-dev.original/plugins-scripts/check_ifoperstatus.pl nagios-plugins-1.4.17-dev/plugins-scripts/check_ifoperstatus.pl
+--- nagios-plugins-1.4.17-dev.original/plugins-scripts/check_ifoperstatus.pl	2012-07-31 13:30:56.000000000 +0000
++++ nagios-plugins-1.4.17-dev/plugins-scripts/check_ifoperstatus.pl	2014-07-30 17:26:22.229868835 +0000
+@@ -96,6 +96,7 @@
+ 
+ $status = process_arguments();
+ 
++$0 = "$0 $hostname args hidden";
+ 
+ # Just in case of problems, let's not hang Nagios
+ $SIG{'ALRM'} = sub {
+diff -ur nagios-plugins-1.4.17-dev.original/plugins-scripts/check_ifstatus.pl nagios-plugins-1.4.17-dev/plugins-scripts/check_ifstatus.pl
+--- nagios-plugins-1.4.17-dev.original/plugins-scripts/check_ifstatus.pl	2012-07-31 13:30:56.000000000 +0000
++++ nagios-plugins-1.4.17-dev/plugins-scripts/check_ifstatus.pl	2014-07-30 17:27:06.309866403 +0000
+@@ -109,6 +109,8 @@
+ #Option checking
+ $status = process_arguments();
+ 
++$0 = "$0 $hostname args hidden";
++
+ if ($status != 0)
+ {
+ 	print_help() ;

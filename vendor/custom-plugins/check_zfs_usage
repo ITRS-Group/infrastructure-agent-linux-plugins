@@ -1,0 +1,123 @@
+#!/usr/bin/env perl
+#
+# AUTHORS:
+#	Copyright (C) 2003-2023 Opsview Limited. All rights reserved
+#
+#	 This file is part of Opsview
+#
+# This will check Solaris ZFS pool for use and health
+
+use warnings;
+use strict;
+use lib "/opt/itrs/infrastructure-agent/plugins/perl/lib", "/opt/opsview/perl/lib/perl5";
+use Monitoring::Plugin qw(OK CRITICAL);
+use English qw( -no_match_vars );
+
+#Create nagios plugin
+my $np = Monitoring::Plugin->new(
+    shortname => "ZFSPOOL",
+    usage =>
+        "Usage: %s -w <Warning> -c <Critical>",
+    blurb => "Check for ZFS Pool stats\n",
+    extra => "\nNOTE: On Ubuntu servers you will probably need to enable /etc/sudoers.d/zfs",
+);
+
+#Arguments
+$np->add_arg(
+    spec => "critical|c=s",
+    help =>
+        "--critical=N,-c N\n   If above this value return CRITICAL (default: 90%)",
+    default => 90,
+);
+
+$np->add_arg(
+    spec => "warning|w=s",
+    help =>
+        "--warning=N,-w N\n   If above this value return WARNING (default: 80%)",
+    default => 80,
+);
+
+$np->getopts;
+
+if ( $np->opts->critical && $np->opts->warning ) {
+    if ( $np->opts->critical < $np->opts->warning ) {
+        $np->nagios_die( "Warning ("
+                . $np->opts->warning
+                . ") can not be more than Critical ("
+                . $np->opts->critical
+                . ")" );
+    }
+}
+
+if ( $np->opts->warning > 100 || $np->opts->warning < 0 ) {
+    $np->nagios_die( "Warning is a percentage so must be between 0 and 100" );
+}
+
+if ( $np->opts->critical > 100 || $np->opts->critical < 0 ) {
+    $np->nagios_die(
+        "Critical is a percentage so must be between 0 and 100" );
+}
+
+my $threshold = $np->set_thresholds(
+    warning  => $np->opts->warning,
+    critical => $np->opts->critical
+);
+
+my $zpool;
+if($OSNAME eq 'linux') {
+    $zpool = 'sudo -n /sbin/zpool';
+} elsif($OSNAME eq 'solaris') {
+    $zpool = '/usr/sbin/zpool';
+} else {
+    $np->nagios_die(3, "Unknown OS for ZFS (zpool) checks");
+}
+
+# Read in all output from zpool.  Grab the header line and use that 
+# as label on the fields as solaris/linux output is different
+my @zpool_output = qx! $zpool list 2>&1 !;
+chomp(@zpool_output);
+
+if($CHILD_ERROR) {
+    $np->nagios_die(3, "Error when running '$zpool list' (check /etc/sudoers.d/zfs?): @zpool_output");
+}
+
+my @header = split / +/, shift @zpool_output;
+
+for my $line (@zpool_output) {
+
+    my @line = split / +/, $line;
+    my %data;
+    for my $col ( 0 .. $#line ) {
+        warn "col=$col - ", $header[$col], " is ",$line[$col],$/ if($np->opts->verbose);
+        $data{ $header[$col] } = $line[$col];
+    }
+
+    $data{CAP} =~ s/\%//;
+
+    if($np->opts->verbose) {
+        use Data::Dumper;
+        #warn "header: ", Dumper(\@header);
+        warn "Line data ", Dumper(\@line);
+        warn "Collated: ", Dumper (\%data);
+    }
+
+    $np->add_perfdata(
+        label     => $data{NAME},
+        value     => $data{CAP},
+        threshold => $threshold,
+        uom       => '%',
+    );
+
+    $np->add_message(
+        $np->check_threshold( $data{CAP} ),
+        $data{NAME} . '=' . $data{CAP} . '%',
+    );
+
+    if ( $data{HEALTH} ne 'ONLINE' ) {
+        $np->add_message( CRITICAL,
+            "'$data{NAME}' is not ONLINE (it is $data{HEALTH})",
+        );
+    }
+}
+
+$np->nagios_exit( $np->check_messages( join_all => ', ', ) );

@@ -1,0 +1,53 @@
+#!/bin/bash
+#
+# AUTHORS:
+#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#
+set -eu
+trap 'echo "METRIC UNKNOWN: Integration broken: could not retrieve physical server utilization"; exit 3' ERR
+
+# get rid of stderr messages
+exec 2> /dev/null
+
+usage()
+{
+  cat <<EOF
+Usage: `basename $0`
+
+Outputs: CPU and memory usage in percentage.
+EOF
+  exit 3
+}
+
+
+OPTIND=1
+while getopts "h" opt
+do
+  case "$opt" in
+    'h') usage ;;
+    '?') usage ;;
+  esac
+done
+shift $(expr $OPTIND - 1)
+
+
+# cpu usage (we take 5 samples with 1sec interval)
+sampling_num=5
+cpu_usage_sum=0
+for (( i=1; i<=$sampling_num; i++ ))
+do
+  cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/")
+  # fail if we got no data
+  [ -n "$cpu_usage" ]
+  cpu_usage_sum=$(awk -v cpu_usage=$cpu_usage -v sum=$cpu_usage_sum 'BEGIN {printf "%f\n", cpu_usage+sum}')
+  sleep 1
+done
+cpu_usage=$(awk -v sum=$cpu_usage_sum -v samples=$sampling_num 'BEGIN {printf "%.2f%%", 100-(sum/samples)}')
+
+# memory
+memory_usage=$(free -m | awk 'NR==2{printf "%.2f%%", $3*100/$2 }')
+
+# fail if we got no data
+[ -n "$memory_usage" ]
+
+echo "METRIC OK: CPU Utilization is $cpu_usage, Memory Utilization is $memory_usage | 'CPU Utilization'=$cpu_usage 'Memory Utilization'=$memory_usage"

@@ -1,0 +1,178 @@
+#!/usr/bin/perl
+#
+# AUTHORS:
+#	Copyright (C) 2003-2023 Opsview Limited. All rights reserved
+#
+#	 This file is part of Opsview
+#
+# REQUIRES smartctl tool
+
+use lib "/opt/itrs/infrastructure-agent/plugins/perl/lib", "/opt/opsview/perl/lib/perl5", "/opt/itrs/infrastructure-agent/plugins";
+use strict;
+use Getopt::Long;
+use Monitoring::Plugin;
+
+my $np = Monitoring::Plugin->new(
+    shortname => "SMART",
+    usage     => "Usage: %s",
+    blurb =>
+"Check for Hard Disk Drive SMART status\n\nIf HDD is not defined all HDD statuses will be read.",
+    extra => "NONE",
+);
+
+$np->add_arg(
+    spec => 'Drives|d=s@',
+    help =>
+'-d, --Drives - Drives to run checks against, defaults to all availible drives',
+    required => 0,
+);
+$np->add_arg(
+    spec => 'blkid|b=s',
+    help => '-b, --blkid - blkid executable location, defaults to /sbin/blkid',
+    required => 0,
+);
+$np->add_arg(
+    spec => 'smartctl|s=s',
+    help =>
+'-s, --smartctl - smartctl executable location defaults to /usr/sbin/smartctl',
+    required => 0,
+);
+$np->add_arg(
+    spec     => 'ata|a=s',
+    help     => '-a, --ata - use ata option, 0 | 1',
+    required => 0,
+);
+$np->add_arg(
+    spec => 'sudo|r=s',
+    help =>
+'-r, --sudo - use sudo to run smartctl, defaults to on, use \'off\' to disable\nYou may need to add the following line the the file: /etc/sudoers\nnagios ALL=NOPASSWD:/usr/sbin/smartctl',
+    required => 0,
+);
+
+$np->getopts;
+
+my $BLKID    = $np->opts->blkid    || "/sbin/blkid";
+my $SMARTCTL = $np->opts->smartctl || "/usr/sbin/smartctl";
+if ( $np->opts->ata ) { $SMARTCTL .= " -d ata" }
+my $DRIVE = $np->opts->Drives || [];
+if ( $np->opts->sudo ne 'off' ) { $SMARTCTL = "sudo $SMARTCTL" }
+
+sub FindAllHDDs {
+    my @drives;
+
+    open my $cmd, $BLKID . "|"
+      or $np->nagios_exit( "UNKNOWN", "No Drives found" );
+    while (<$cmd>) {
+        chomp;
+        if (m#^(/dev/[hvs]d\w)\d*:\s+#) {
+            my $AlreadyFound = 0;
+            foreach (@drives) {
+                if ( $1 eq $_ ) { $AlreadyFound = 1; }
+            }
+            unless ($AlreadyFound) {
+                push @drives, $1;
+            }
+        }
+    }
+    close $cmd;
+
+    return @drives;
+}
+
+my $RET;
+my $INFO;
+
+sub run_smartctl {
+    my $drive = shift or $np->nagios_exit( "UNKNOWN", "Invalid Drive" );
+    my $Return = 'OK';
+    my $Text;
+    my $StartTag = 0;
+
+    my $CMD = "$SMARTCTL -A $drive";
+    my @data;
+    open my $cmd, "$CMD 2>&1|" or die $!;
+
+    #open DALOG, ">$LASTLOG_FILE" or die "$! $LASTLOG_FILE";
+    while (<$cmd>) {
+        if (/command not found/) {
+            close $cmd;
+            chomp;
+            $np->nagios_exit( "UNKNOWN",
+                "Command error - $_ \nCommand - $CMD" );
+        }
+        elsif (/\[this device: CD\/DVD\]/) {
+            close $cmd;
+            $np->nagios_exit( "UNKNOWN", "Device $drive is a CD/DVD drive" );
+        }
+        elsif (
+/^Smartctl: Device Read Identity Failed \(not an ATA\/ATAPI device\)/
+          )
+        {
+            close $cmd;
+            $np->nagios_exit( "UNKNOWN", "Device $drive does not exist" );
+        }
+        elsif (/failed: Permission denied/) {
+            close $cmd;
+            $np->nagios_exit( "UNKNOWN",
+                "Insufficient access to run smartctl" );
+        }
+        elsif (/^ID#\s*ATTRIBUTE_NAME\s*FLAG/) {
+            $StartTag = 1;
+            last;
+        }
+
+    }
+    unless ($StartTag) {
+        close $cmd;
+        $np->nagios_exit( "UNKNOWN",
+"Smart output parse error, no param start tag found, check executed command\n$CMD\n"
+        );
+    }
+
+    while (<$cmd>) {
+        @data = split;
+        my ( $Name, $value, $thresh, $Type, $FailedDate, $RawValue ) =
+          @data[ 1, 3, 5, 6, 8, 9 ];
+        next unless $FailedDate;    #Only continue if valid line
+        if ( $FailedDate ne '-' ) {
+            if ( $Return eq 'OK' ) {
+                $Return = 'WARNING';
+            }                       #Old_age relate to a warning
+            if ( $Type =~ /pre-fail/i ) {    #pre-fail relate to a critical
+                $Return = 'CRITICAL';
+            }
+            $Text .= " $Return $Name Failed on: $FailedDate";
+        }
+        elsif ( $value <= $thresh ) {
+            if ( $Return eq 'OK' ) {
+                $Return = 'WARNING';
+            }    #Old_age relate to a warning
+            if ( $Type =~ /pre-fail/i ) {    #pre-fail relate to a critical
+                $Return = 'CRITICAL';
+            }
+            $Text .=
+" $Name outside of threshold, value $value threshold $thresh raw value $RawValue";
+        }
+
+    }
+    close $cmd;
+    return ( $Return, $Text );
+}
+
+if ( scalar(@$DRIVE) == 0 ) {
+    @$DRIVE = FindAllHDDs();
+}
+
+my $FullReturnText;
+my $OverallReturn = 'OK';
+
+foreach my $drive (@$DRIVE) {
+    $FullReturnText .= "$drive";
+    my ( $Ret, $txt ) = run_smartctl($drive);
+    $FullReturnText .= "$txt ";
+    if ( $Ret eq 'WARNING' && $OverallReturn eq 'OK' ) {
+        $OverallReturn = 'WARNING';
+    }
+    if ( $Ret eq 'CRITICAL' ) { $OverallReturn = 'CRITICAL'; }
+}
+$np->nagios_exit( $OverallReturn, $FullReturnText );
