@@ -83,12 +83,6 @@ commands:
     path: "{PLUGIN_DIR}/check_load $ARG1$"
   check_log:
     path: "{PLUGIN_DIR}/check_log $ARG1$"
-  check_log.sh:
-    path: "{PLUGIN_DIR}/check_log.sh $ARG1$"
-  check_macosx_memory:
-    path: "{PLUGIN_DIR}/check_macosx_memory $ARG1$"
-  check_macosx_sensors:
-    path: "{PLUGIN_DIR}/check_macosx_sensors $ARG1$"
   check_mailq:
     path: "{PLUGIN_DIR}/check_mailq $ARG1$"
   check_memory:
@@ -125,8 +119,6 @@ commands:
     path: "{PLUGIN_DIR}/check_opsview_datastore $ARG1$"
   check_oracle:
     path: "{PLUGIN_DIR}/check_oracle $ARG1$"
-  check_oracle.sh:
-    path: "{PLUGIN_DIR}/check_oracle.sh $ARG1$"
   check_overcr:
     path: "{PLUGIN_DIR}/check_overcr $ARG1$"
   check_ping:
@@ -151,8 +143,6 @@ commands:
     path: "{PLUGIN_DIR}/check_rpc $ARG1$"
   check_sensors:
     path: "{PLUGIN_DIR}/check_sensors $ARG1$"
-  check_sensors.sh:
-    path: "{PLUGIN_DIR}/check_sensors.sh $ARG1$"
   check_simap:
     path: "{PLUGIN_DIR}/check_simap $ARG1$"
   check_smart:
