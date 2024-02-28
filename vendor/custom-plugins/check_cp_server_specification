@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # AUTHORS:
-#    Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+#    Copyright (C) 2003-2024 ITRS Group Ltd. All rights reserved
 #
 set -eu
 trap 'echo "METRIC UNKNOWN: Integration broken: could not retrieve physical server specification"; exit 3' ERR

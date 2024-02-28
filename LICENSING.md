@@ -90,7 +90,7 @@ Agent GitHub repositories at:
 * utils.sh
 
 ## ITRS Group
-**Copyright**: Copyright (C) 2003-2023 ITRS Group Ltd. All rights reserved
+**Copyright**: Copyright (C) 2003-2024 ITRS Group Ltd. All rights reserved
 
 **License:** [BSD 3-Clause License](licenses/BSD-3.0)
 
