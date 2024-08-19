@@ -25,6 +25,7 @@ my $np = Monitoring::Plugin->new(
       "Usage: \"%s -l <Check> -C <Container> -w <Warning> -c <Critical>\" Checks can be found in the help section",
     blurb => "Check for Docker status\n",
     extra => "NONE",
+    license => "License: BSD 3-Clause (https://github.com/ITRS-Group/infrastructure-agent-linux-plugins/blob/main/licenses/BSD-3.0)",
 );
 
 #Arguments

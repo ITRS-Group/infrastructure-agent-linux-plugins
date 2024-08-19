@@ -18,8 +18,13 @@ my $np = Monitoring::Plugin->new(
     shortname => "ZFSPOOL",
     usage =>
         "Usage: %s -w <Warning> -c <Critical>",
-    blurb => "Check for ZFS Pool stats\n",
-    extra => "\nNOTE: On Ubuntu servers you will probably need to enable /etc/sudoers.d/zfs",
+    blurb => "Check for ZFS Pool stats\n
+Installation requirement: sudo yum install zfsutils-linux | sudo apt-get install zfsutils-linux\n
+Note: Due to the infrastructure-agent service now operating as a non-root user, it is necessary to grant the infra-agent user specific sudo privileges.\n
+To achieve this, add the following line to the sudoers file:\n
+infra-agent ALL=NOPASSWD:/sbin/zpool\n
+This will allow the infra-agent user to execute the /sbin/zpool command without being prompted for a password. The /sbin/zpool file should only be modifiable by root.",
+    license => "License: BSD 3-Clause (https://github.com/ITRS-Group/infrastructure-agent-linux-plugins/blob/main/licenses/BSD-3.0)",
 );
 
 #Arguments

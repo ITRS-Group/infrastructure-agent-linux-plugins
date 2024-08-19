@@ -30,6 +30,7 @@ my $np = Monitoring::Plugin->new(
     blurb =>
       q{Check the number of files and directories within a parent directory are
 within limits.},
+    license => "License: BSD 3-Clause (https://github.com/ITRS-Group/infrastructure-agent-linux-plugins/blob/main/licenses/BSD-3.0)",
 );
 
 $np->add_arg(

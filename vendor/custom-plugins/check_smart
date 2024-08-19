@@ -16,8 +16,14 @@ my $np = Monitoring::Plugin->new(
     shortname => "SMART",
     usage     => "Usage: %s",
     blurb =>
-"Check for Hard Disk Drive SMART status\n\nIf HDD is not defined all HDD statuses will be read.",
+"Check for Hard Disk Drive SMART status\n\nIf HDD is not defined all HDD statuses will be read.\n
+Installation requirement: sudo yum install smartmontools | sudo apt-get install smartmontools\n
+Note: Due to the infrastructure-agent service now operating as a non-root user, it is necessary to grant the infra-agent user specific sudo privileges when using this plugin with the default settings.\n
+To achieve this, add the following line to the sudoers file:\n
+infra-agent ALL=NOPASSWD:/usr/sbin/smartctl\n
+This will allow the infra-agent user to execute the /usr/sbin/smartctl command without being prompted for a password. The /usr/sbin/smartctl file should only be modifiable by root.",
     extra => "NONE",
+    license => "License: BSD 3-Clause (https://github.com/ITRS-Group/infrastructure-agent-linux-plugins/blob/main/licenses/BSD-3.0)",
 );
 
 $np->add_arg(
@@ -45,7 +51,7 @@ $np->add_arg(
 $np->add_arg(
     spec => 'sudo|r=s',
     help =>
-'-r, --sudo - use sudo to run smartctl, defaults to on, use \'off\' to disable\nYou may need to add the following line the the file: /etc/sudoers\nnagios ALL=NOPASSWD:/usr/sbin/smartctl',
+"-r, --sudo - use sudo to run smartctl, defaults to on, use 'off' to disable\nYou may need to add the following line to the file: /etc/sudoers\ninfra-agent ALL=NOPASSWD:/usr/sbin/smartctl",
     required => 0,
 );
 

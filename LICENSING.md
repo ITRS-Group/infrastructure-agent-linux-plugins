@@ -104,7 +104,7 @@ Agent GitHub repositories at:
 * check_cp_hardware_vendor
 * check_cp_os
 * check_cp_server_specification
-* check_cp_server_utilization:n
+* check_cp_server_utilization
 * check_cpu_stats
 * check_docker
 * check_file_count
