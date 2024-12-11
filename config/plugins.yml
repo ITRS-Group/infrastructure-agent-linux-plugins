@@ -3,177 +3,265 @@
 commands:
   check_apt:
     path: "{PLUGIN_DIR}/check_apt $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_breeze:
     path: "{PLUGIN_DIR}/check_breeze $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_by_ssh:
     path: "{PLUGIN_DIR}/check_by_ssh $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_clamd:
     path: "{PLUGIN_DIR}/check_clamd $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cluster:
     path: "{PLUGIN_DIR}/check_cluster $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_cpu_model:
     path: "{PLUGIN_DIR}/check_cp_cpu_model $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_filesystem_capacity:
     path: "{PLUGIN_DIR}/check_cp_filesystem_capacity $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_filesystem_utilization:
     path: "{PLUGIN_DIR}/check_cp_filesystem_utilization $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_hardware_model:
     path: "{PLUGIN_DIR}/check_cp_hardware_model $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_hardware_vendor:
     path: "{PLUGIN_DIR}/check_cp_hardware_vendor $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_os:
     path: "{PLUGIN_DIR}/check_cp_os $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_server_specification:
     path: "{PLUGIN_DIR}/check_cp_server_specification $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cp_server_utilization:
     path: "{PLUGIN_DIR}/check_cp_server_utilization $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_cpu_stats:
     path: "{PLUGIN_DIR}/check_cpu_stats $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_dhcp:
     path: "{PLUGIN_DIR}/check_dhcp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_dig:
     path: "{PLUGIN_DIR}/check_dig $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_dir_age:
     path: "{PLUGIN_DIR}/check_dir_age $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_disk:
     path: "{PLUGIN_DIR}/check_disk $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_disk_smb:
     path: "{PLUGIN_DIR}/check_disk_smb $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_dns:
     path: "{PLUGIN_DIR}/check_dns $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_docker:
     path: "{PLUGIN_DIR}/check_docker $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_dummy:
     path: "{PLUGIN_DIR}/check_dummy $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_etcd:
     path: "{PLUGIN_DIR}/check_etcd $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_file_age:
     path: "{PLUGIN_DIR}/check_file_age $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_file_count:
     path: "{PLUGIN_DIR}/check_file_count $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_flexlm:
     path: "{PLUGIN_DIR}/check_flexlm $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ftp:
     path: "{PLUGIN_DIR}/check_ftp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_haproxy:
     path: "{PLUGIN_DIR}/check_haproxy $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_hpjd:
     path: "{PLUGIN_DIR}/check_hpjd $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_http:
     path: "{PLUGIN_DIR}/check_http $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_icmp:
     path: "{PLUGIN_DIR}/check_icmp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ide_smart:
     path: "{PLUGIN_DIR}/check_ide_smart $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ifoperstatus:
     path: "{PLUGIN_DIR}/check_ifoperstatus $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ifstatus:
     path: "{PLUGIN_DIR}/check_ifstatus $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_imap:
     path: "{PLUGIN_DIR}/check_imap $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ircd:
     path: "{PLUGIN_DIR}/check_ircd $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_jabber:
     path: "{PLUGIN_DIR}/check_jabber $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ldap:
     path: "{PLUGIN_DIR}/check_ldap $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ldaps:
     path: "{PLUGIN_DIR}/check_ldaps $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_load:
     path: "{PLUGIN_DIR}/check_load $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_log:
     path: "{PLUGIN_DIR}/check_log $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_mailq:
     path: "{PLUGIN_DIR}/check_mailq $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_memory:
     path: "{PLUGIN_DIR}/check_memory $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_memory_solaris:
     path: "{PLUGIN_DIR}/check_memory_solaris $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_mrtg:
     path: "{PLUGIN_DIR}/check_mrtg $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_mrtgtraf:
     path: "{PLUGIN_DIR}/check_mrtgtraf $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_mysql:
     path: "{PLUGIN_DIR}/check_mysql $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_mysql_query:
     path: "{PLUGIN_DIR}/check_mysql_query $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_nagios:
     path: "{PLUGIN_DIR}/check_nagios $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_nntp:
     path: "{PLUGIN_DIR}/check_nntp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_nntps:
     path: "{PLUGIN_DIR}/check_nntps $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_nt:
     path: "{PLUGIN_DIR}/check_nt $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ntp:
     path: "{PLUGIN_DIR}/check_ntp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ntp_peer:
     path: "{PLUGIN_DIR}/check_ntp_peer $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ntp_time:
     path: "{PLUGIN_DIR}/check_ntp_time $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_nwstat:
     path: "{PLUGIN_DIR}/check_nwstat $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_opsview:
     path: "{PLUGIN_DIR}/check_opsview $ARG1$"
+    execution_style: STDIN_ARGS
   check_opsview_datastore:
     path: "{PLUGIN_DIR}/check_opsview_datastore $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_oracle:
     path: "{PLUGIN_DIR}/check_oracle $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_overcr:
     path: "{PLUGIN_DIR}/check_overcr $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ping:
     path: "{PLUGIN_DIR}/check_ping $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_pop:
     path: "{PLUGIN_DIR}/check_pop $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_postgres:
     path: "{PLUGIN_DIR}/check_postgres $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_procs:
     path: "{PLUGIN_DIR}/check_procs $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_rabbitmq_node:
     path: "{PLUGIN_DIR}/check_rabbitmq_node $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_radius_ih:
     path: "{PLUGIN_DIR}/check_radius_ih $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_raid:
     path: "{PLUGIN_DIR}/check_raid $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_real:
     path: "{PLUGIN_DIR}/check_real $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ro_mounts:
     path: "{PLUGIN_DIR}/check_ro_mounts $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_rpc:
     path: "{PLUGIN_DIR}/check_rpc $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_sensors:
     path: "{PLUGIN_DIR}/check_sensors $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_simap:
     path: "{PLUGIN_DIR}/check_simap $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_smart:
     path: "{PLUGIN_DIR}/check_smart $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_smtp:
     path: "{PLUGIN_DIR}/check_smtp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_snmp:
     path: "{PLUGIN_DIR}/check_snmp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_spop:
     path: "{PLUGIN_DIR}/check_spop $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ssh:
     path: "{PLUGIN_DIR}/check_ssh $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ssmtp:
     path: "{PLUGIN_DIR}/check_ssmtp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_swap:
     path: "{PLUGIN_DIR}/check_swap $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_tcp:
     path: "{PLUGIN_DIR}/check_tcp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_time:
     path: "{PLUGIN_DIR}/check_time $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_time_skew:
     path: "{PLUGIN_DIR}/check_time_skew $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_udp:
     path: "{PLUGIN_DIR}/check_udp $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_ups:
     path: "{PLUGIN_DIR}/check_ups $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_users:
     path: "{PLUGIN_DIR}/check_users $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_varnish:
     path: "{PLUGIN_DIR}/check_varnish $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_wave:
     path: "{PLUGIN_DIR}/check_wave $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
   check_zfs_usage:
     path: "{PLUGIN_DIR}/check_zfs_usage $ARG1$"
+    execution_style: COMMAND_LINE_ARGS
