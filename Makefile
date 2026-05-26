@@ -77,6 +77,7 @@ check-radius-patch: check-radius-extract
 	cd $(CR_EXTRACTED) && patch -p1 < $(CR_PATCH_DIR)/makefile.patch
 	cd $(CR_EXTRACTED) && patch -p1 < $(CR_PATCH_DIR)/lucid_fixes.patch
 	cd $(CR_EXTRACTED) && patch -p1 < $(CR_PATCH_DIR)/hidden_passwords.patch
+	cd $(CR_EXTRACTED) && patch -p1 < $(CR_PATCH_DIR)/gcc_fixes.patch
 
 .PHONY: check-radius-build
 CR_EXTRACTED=$(EXTRACTED_DIR)/$(CHECK_RADIUS_IH)

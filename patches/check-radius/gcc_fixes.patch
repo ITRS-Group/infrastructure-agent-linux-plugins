@@ -1,0 +1,35 @@
+--- check_radius_ih-1.1/check_radius_ih.c
++++ check_radius_ih-1.1/check_radius_ih.c
+@@ -156,9 +156,9 @@
+ 
+ #define LEGAL_SIZE(x) sizeof((x))-1		/* calculate useable string space		*/
+ 
+-void fnInitialize();
+-void fnGatherInformation();
+-void fnPrintInformation();
++void fnInitialize(RADIUS_HEADER *radhead);
++void fnGatherInformation(void);
++void fnPrintInformation(void);
+ void fnPrintHelp(char *cmd);
+ void fnGeneratePacket(RADIUS_HEADER *radhead);
+ int fnGeneratePasswordHash(RADIUS_HEADER *radhead);
+@@ -257,7 +257,7 @@
+ void fnInitialize(RADIUS_HEADER *radhead)
+ {
+ 	memset(&global,0,sizeof(GLOBAL));
+-	memset(radhead,0,sizeof(radhead));
++	memset(radhead,0,sizeof(*radhead));
+ 
+ 	radhead->rad_attr = NULL;
+ 
+--- check_radius_ih-1.1/md5.h
++++ check_radius_ih-1.1/md5.h
+@@ -7,7 +7,7 @@
+   been defined with C compiler flags.
+  */
+ #ifndef PROTOTYPES
+-#define PROTOTYPES 0
++#define PROTOTYPES 1
+ #endif
+ 
+ /* POINTER defines a generic pointer type */
